@@ -9,6 +9,24 @@
 # cd /path/to/your/project
 # git init
 # git remote add origin ssh://git@bitbucket.org/seikath/aegir.bsms.psycopg2-2.5.1-1.git
+# git add *
+# git commit -m "psycopg2-2.5.1-1.git"
 ############################################################################################
+# root@aegir.voicecom.bg:[Sat Jul 27 02:02:04]:[/opt/proceed.bsms/psycopg2-2.5.1-1]$ git push -u origin --all
+# Counting objects: 3, done.
+# Delta compression using up to 2 threads.
+# Compressing objects: 100% (2/2), done.
+# Writing objects: 100% (3/3), 439 bytes, done.
+# Total 3 (delta 0), reused 0 (delta 0)
+# To ssh://git@bitbucket.org/seikath/aegir.bsms.psycopg2-2.5.1-1.git
+# * [new branch]      master -> master
+# Branch master set up to track remote branch master from origin.
+############################################################################################
+## git checkout -b lean_db_conection
+
+
+
 
 import psycopg2
+
+
