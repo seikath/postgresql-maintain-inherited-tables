@@ -38,6 +38,12 @@
 # SyntaxError: Non-ASCII character '\xe2' in file db.pgsql.inc.py on line 31, but no encoding declared; see http://www.python.org/peps/pep-0263.html for details
 # http://mohsinpage.wordpress.com/2010/06/10/python-syntaxerror-non-ascii-character-xe2-in-file/
 
+#The connection parameters can be specified either as a libpq connection string using the dsn parameter:
+#conn = psycopg2.connect("dbname=test user=postgres password=secret")
+	
+#or using a set of keyword arguments:
+#conn = psycopg2.connect(database="test", user="postgres", password="secret")
+
 import psycopg2
 import sys
 from datetime import datetime
@@ -63,5 +69,13 @@ config_aegir = {
   'port': '6543',
 }
 
-
+# initialize db conection to nova
+try:
+	cnx_aegir = psycopg2.connect(**config_aegir)
+	# open nova cursor
+	cursor_nova = cnx_nova.cursor()
+except psycopg2.Error, e:
+	print "["+str(datetime.now())+"] : " + "Error %s: %s" % (e.args[0], e.args[1])
+	sys.exit (1)
+	
 sys.exit (0)
