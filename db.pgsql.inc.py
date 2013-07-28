@@ -1,3 +1,4 @@
+# coding: utf-8
 # 2013-07-27.00.46.56
 ############################################################################################
 # cd /opt/proceed.bsms/psycopg2-2.5.1-1
@@ -33,7 +34,9 @@
 # user – user name used to authenticate
 # password – password used to authenticate
 # host – database host address (defaults to UNIX socket if not provided)
-# port – connection port number (defaults to 5432 if not provided)
+# port – connection port number (defaults to 5432 if not provided
+# SyntaxError: Non-ASCII character '\xe2' in file db.pgsql.inc.py on line 31, but no encoding declared; see http://www.python.org/peps/pep-0263.html for details
+# http://mohsinpage.wordpress.com/2010/06/10/python-syntaxerror-non-ascii-character-xe2-in-file/
 
 import psycopg2
 import sys
