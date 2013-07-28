@@ -43,39 +43,57 @@
 	
 #or using a set of keyword arguments:
 #conn = psycopg2.connect(database="test", user="postgres", password="secret")
+# http://www.postgresql.org/docs/current/static/libpq-connect.html#LIBPQ-PARAMKEYWORDS
 
 import psycopg2
 import sys
+import string
 from datetime import datetime
 
 # CONFIGs, SQL etc ========= [ start ] 
 # keyword arguments:
 config_aegir = {
-  'user': 'pdns',
+  'user': 'seik',
   'password': 'pdns_user_passwd',
   'host': '172.16.0.1',
-  'dbname': 'nova',
+  'dbname': 'vc_stats',
   'port': '6543',
+  'connect_timeout' : '2',
 }
 # dns
 
-
-
-config_aegir = {
-  'user': 'pdns',
-  'password': 'pdns_user_passwd',
-  'host': '172.16.0.1',
-  'dbname': 'nova',
-  'port': '6543',
-}
+#print "["+str(datetime.now())+"] : " + "Status : conencting to {0} at {1} as user {2}".format(config_aegir.get('dbname'),config_aegir.get('host'),config_aegir.get('user'))
+#sys.exit (0)
+#print config_aegir.get('dbname')
+#print config_aegir.get('port')
+#print config_aegir.get('connect_timeout')
+#print ("["+str(datetime.now())+"] : " + "Status : conencting to {} at {} as user {}".format(config_aegir.get('host'),config_aegir.get('dbname'),config_aegir.get('user')))
+##>>> '{0}, {1}, {2}'.format('a', 'b', 'c')
+##'a, b, c'
+##>>> '{}, {}, {}'.format('a', 'b', 'c')  # 2.7+ only
+# sys.exit (0)
+#config_aegir = {
+  #'user': 'pdns',
+  #'password': 'pdns_user_passwd',
+  #'host': '172.16.0.1',
+  #'dbname': 'nova',
+  #'port': '6543',
+#}
 
 # initialize db conection to nova
+
 try:
 	cnx_aegir = psycopg2.connect(**config_aegir)
 	# open nova cursor
 	cursor_nova = cnx_nova.cursor()
 except psycopg2.Error, e:
-	print "["+str(datetime.now())+"] : " + "Error %s: %s" % (e.args[0], e.args[1])
+	print ("["+str(datetime.now())+"] : " + "Error : {0!s} conencting to {1!s} at {2} as user {3}".
+	format(
+	e.args[0].rstrip('\r\n'),
+	config_aegir.get('host').rstrip('\r\n'),
+	config_aegir.get('dbname'),
+	config_aegir.get('user'))
+	)
 	sys.exit (1)
 	
 sys.exit (0)
