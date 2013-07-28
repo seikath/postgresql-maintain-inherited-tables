@@ -27,9 +27,7 @@
 #  https://drupal.org/node/1066342
 # http://initd.org/psycopg/docs/module.html#exceptions
 # http://initd.org/psycopg/docs/usage.html
-
 # The basic connection parameters are:
-
 # dbname – the database name (only in the dsn string)
 # database – the database name (only as keyword argument)
 # user – user name used to authenticate
