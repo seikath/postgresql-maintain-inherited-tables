@@ -18,49 +18,54 @@ pool = eventlet.GreenPool()
 for body in pool.imap(fetch, urls):
   print "got body", len(body)
 
+"""
+>>> dir(eventlet)
+['GreenPile', 'GreenPool', 'Queue', 'StopServe', 'Timeout', 'TimeoutError', '__builtins__', '__doc__', '__file__', '__name__', '__package__', '__path__', '__version__', 'call_after_global', 'conne]
+>>> 
 
-#NAME
-    #eventlet
+NAME
+    eventlet
 
-#FILE
-    #/usr/lib/python2.6/site-packages/eventlet-0.13.0-py2.6.egg/eventlet/__init__.py
+FILE
+    /usr/lib/python2.6/site-packages/eventlet-0.13.0-py2.6.egg/eventlet/__init__.py
 
-#PACKAGE CONTENTS
-    #api
-    #backdoor
-    #convenience
-    #corolocal
-    #coros
-    #db_pool
-    #debug
-    #event
-    #green (package)
-    #greenio
-    #greenpool
-    #greenthread
-    #hubs (package)
-    #patcher
-    #pool
-    #pools
-    #proc
-    #processes
-    #queue
-    #saranwrap
-    #semaphore
-    #support (package)
-    #timeout
-    #tpool
-    #twistedutil (package)
-    #util
-    #websocket
-    #wsgi
+PACKAGE CONTENTS
+    api
+    backdoor
+    convenience
+    corolocal
+    coros
+    db_pool
+    debug
+    event
+    green (package)
+    greenio
+    greenpool
+    greenthread
+    hubs (package)
+    patcher
+    pool
+    pools
+    proc
+    processes
+    queue
+    saranwrap
+    semaphore
+    support (package)
+    timeout
+    tpool
+    twistedutil (package)
+    util
+    websocket
+    wsgi
 
-#FUNCTIONS
-    #getcurrent(...)
+FUNCTIONS
+    getcurrent(...)
 
-#DATA
-    #__version__ = '0.13.0'
-    #version_info = (0, 13, 0)
+DATA
+    __version__ = '0.13.0'
+    version_info = (0, 13, 0)
 
-#VERSION
-    #0.13.0
+VERSION
+    0.13.0
+"""
