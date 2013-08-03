@@ -4,7 +4,8 @@
 
 urls = ["http://127.0.0.1:13000/status.txt?user=seik&password=seik&smsc=first",
      "http://10.9.0.5:13000/status.txt?user=seik&password=seik&smsc=second",
-     "http://10.9.0.157:13000/status.txt?user=seik&password=seik&smsc=third"]
+     "http://10.9.0.157:13000/status.txt?user=seik&password=seik&smsc=third"
+    ]
 
 import eventlet
 from eventlet.green import urllib2
