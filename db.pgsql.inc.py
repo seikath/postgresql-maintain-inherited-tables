@@ -55,7 +55,8 @@ from datetime import datetime
 config_aegir = {
   'user': 'seik',
   'password': 'pdns_user_passwd',
-  'host': '172.16.0.1',
+#  'host': '172.16.0.1',
+  'host': '127.0.0.1',
   'dbname': 'vc_stats',
   'port': '6543',
   'connect_timeout' : '2',
@@ -85,14 +86,15 @@ config_aegir = {
 try:
 	cnx_aegir = psycopg2.connect(**config_aegir)
 	# open nova cursor
-	cursor_nova = cnx_nova.cursor()
+	cursor_aegir = cnx_aegir.cursor()
 except psycopg2.Error, e:
-	print ("["+str(datetime.now())+"] : " + "Error : {0!s} conencting to {1!s} at {2} as user {3}".
+	print ("["+str(datetime.now())+"] : {0!s} conencting to {1!s} at {2!s} as user {3!s}".
 	format(
-	e.args[0].rstrip('\r\n'),
-	config_aegir.get('host').rstrip('\r\n'),
-	config_aegir.get('dbname'),
-	config_aegir.get('user'))
+		e.args[0].rstrip('\r\n'),
+		config_aegir.get('host').rstrip('\r\n'),
+		config_aegir.get('dbname').rstrip('\r\n'),
+		config_aegir.get('user').rstrip('\r\n'),
+	)
 	)
 	sys.exit (1)
 	
