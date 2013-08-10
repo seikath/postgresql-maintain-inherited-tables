@@ -55,43 +55,68 @@ config = ConfigParser.SafeConfigParser()
 # config.read(os.path.dirname(os.path.abspath(__file__))+'.c')
 config_file=os.path.dirname(os.path.abspath(__file__))+'/'+os.path.basename(os.path.dirname(os.path.abspath(__file__)))+'.cfg'
 
-print config_file
+#print config_file
 
 try:
 	config.read(config_file)
 	config_aegir = dict(config.items("db-aegir-local"))
-	print config_aegir
+	weeks_to_deactivate = config.getint('rule-conf','weeks_to_deactivate')
+	weeks_to_activate = config.getint('rule-conf','weeks_to_activate')
+	table_name_base = config.get('rule-conf','table_name_base')
+	vc_debug = config.getboolean('rule-conf','vc_debug')
+	#print config_aegir
 except ConfigParser.Error, e:
 	print "["+str(datetime.now())+"] : " + "Error : %s" % (e)
 	sys.exit(1)
 	
 
 try:
-    conn = psycopg2.connect(**config_aegir)
-    conn.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    conn_aegir = psycopg2.connect(**config_aegir)
+    conn_aegir.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 except:
-    print "I am unable to connect!!"
+    print "I am unable to connect:: %s !!".format(config_aegir)
+    sys.exit(1)
 
 # sys.exit (0)
+cur_aegir = conn_aegir.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-
-query = ("""
-select * from bsms_in_clients where sid = 680;
+query_rule = ("""
+SELECT n.nspname AS schemaname, c.relname AS tablename, r.rulename, r.ev_enabled as active,
+    pg_get_ruledef(r.oid) AS definition
+   FROM pg_rewrite r
+   JOIN pg_class c ON c.oid = r.ev_class
+   LEFT JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE true 
+-- and r.rulename <> '_RETURN'::name
+and c.relname = %(tablename)s
+and  r.rulename like 'route_rule_bsms_in_p' || extract(year from now()+ interval '%(week)s week') || '%%'
+-- and r.ev_enabled <> %(enabled)s 
+and r.rulename  in (
+	select  
+	'route_rule_bsms_in_p' 
+	|| extract(year from now()+ interval '%(week)s week') 
+	|| 'w' || extract(week from now() + interval '%(week)s week') 
+	as  rulename
+	)
+order by r.rulename 
+limit 1
+;
 """)
 
-debug = False
-#debug = True
-vc_debug = False
-#vc_debug = True
-epg_debug = True
-# epg_debug = False
+#debug = False
+##debug = True
+#vc_debug = False
+##vc_debug = True
+#epg_debug = True
+## epg_debug = False
 
-if not epg_debug : print "["+str(datetime.now())+"] : Debug set to false at " + os.path.abspath(__file__) 
+if not vc_debug : print "["+str(datetime.now())+"] : Debug set to false at " + os.path.abspath(__file__) 
+
+print cur_aegir.mogrify(query_rule,{'week' : weeks_to_deactivate,'enabled' : "D",'tablename': table_name_base})
 
 
 try:
-    cur.execute(query)
+    cur_aegir.execute(query_rule,{'week' : weeks_to_deactivate,'enabled' : "D",'tablename': table_name_base})
 except psycopg2.Error, e:
 	print ("["+str(datetime.now())+"] : {0!s} conencting to {1!s} at {2!s} as user {3!s}".
 	format(
@@ -102,8 +127,28 @@ except psycopg2.Error, e:
 	)
 	)
 
+rec = cur_aegir.fetchone()
+print "[{0!s}]".format(cur_aegir.rowcount)
+if cur_aegir.rowcount:
+	if rec['active']:
+		print "We have active rule {0!s}".format(rec['rulename'])
+	else:
+		print "We have inactive rule {0!s}".format(rec['rulename'])
+else:
+	print "We dont have rule serving that week"
+	
+#print rec['rulename']
 
+#print rec['active']
+
+
+
+
+
+cur_aegir.close()
+conn_aegir.close()
 sys.exit (0)
+
 
 
 # CONFIGs, SQL etc ========= [ end ] 
