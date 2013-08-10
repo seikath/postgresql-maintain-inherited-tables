@@ -64,7 +64,7 @@ try:
 	weeks_to_activate = config.getint('rule-conf','weeks_to_activate')
 	table_name_base = config.get('rule-conf','table_name_base')
 	vc_debug = config.getboolean('rule-conf','vc_debug')
-	#print config_aegir
+	if vc_debug : print "["+str(datetime.now())+"] : db config : {0!s}".format(config_aegir)
 except ConfigParser.Error, e:
 	print "["+str(datetime.now())+"] : " + "Error : %s" % (e)
 	sys.exit(1)
@@ -74,7 +74,7 @@ try:
     conn_aegir = psycopg2.connect(**config_aegir)
     conn_aegir.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 except:
-    print "I am unable to connect:: %s !!".format(config_aegir)
+    print "["+str(datetime.now())+"] : I am unable to connect:: %s !!".format(config_aegir)
     sys.exit(1)
 
 # sys.exit (0)
@@ -103,39 +103,52 @@ limit 1
 ;
 """)
 
-#debug = False
-##debug = True
-#vc_debug = False
-##vc_debug = True
-#epg_debug = True
-## epg_debug = False
 
 if not vc_debug : print "["+str(datetime.now())+"] : Debug set to false at " + os.path.abspath(__file__) 
 
-print cur_aegir.mogrify(query_rule,{'week' : weeks_to_deactivate,'enabled' : "D",'tablename': table_name_base})
+if vc_debug : print "["+str(datetime.now())+"] : SQL: ${0!s}".format(cur_aegir.mogrify(query_rule,{'week' : weeks_to_deactivate,'enabled' : "D",'tablename': table_name_base}))
 
 
 try:
-    cur_aegir.execute(query_rule,{'week' : weeks_to_deactivate,'enabled' : "D",'tablename': table_name_base})
+	# 2013-08-10.21.54.14 check rule to deactivate
+	cur_aegir.execute(query_rule,{'week' : weeks_to_deactivate,'enabled' : "D",'tablename': table_name_base})
 except psycopg2.Error, e:
-	print ("["+str(datetime.now())+"] : {0!s} conencting to {1!s} at {2!s} as user {3!s}".
-	format(
-		e.args[0].rstrip('\r\n'),
-		config_aegir.get('host').rstrip('\r\n'),
-		config_aegir.get('dbname').rstrip('\r\n'),
-		config_aegir.get('user').rstrip('\r\n'),
-	)
-	)
+	if vc_debug :
+		print ("["+str(datetime.now())+"] : {0!s} conencting to {1!s} at {2!s} as user {3!s}".
+			format(
+				e.args[0].rstrip('\r\n'),
+				config_aegir.get('host').rstrip('\r\n'),
+				config_aegir.get('dbname').rstrip('\r\n'),
+				config_aegir.get('user').rstrip('\r\n'),
+			)
+		)
 
-rec = cur_aegir.fetchone()
-print "[{0!s}]".format(cur_aegir.rowcount)
-if cur_aegir.rowcount:
-	if rec['active']:
-		print "We have active rule {0!s}".format(rec['rulename'])
+rec_deactiavate = cur_aegir.fetchone()
+
+if vc_debug : print "rules found : [{0!s}]".format(cur_aegir.rowcount)
+if vc_debug : print "active : [{0!s}]".format(rec_deactiavate['active'])
+
+if int(cur_aegir.rowcount) > 0:
+	# tva e O 
+	if rec_deactiavate['active'] == 'O':
+		print "We have active rule {0!s} to deactivate".format(rec_deactiavate['rulename'])
+		sql_to_deactivete="alter table {0!s} disable rule {1!s};".format(table_name_base,rec_deactiavate['rulename'])
+		try:
+			cur_aegir.execute(sql_to_deactivete)
+			if vc_debug : print "["+str(datetime.now())+"] : executed '{0!s}'".format(sql_to_deactivete)
+		except psycopg2.Error, e:
+			#if vc_debug :
+			print ("["+str(datetime.now())+"] : ERROR : {0!s} on executing of {1!s}".
+				format(
+					e.args[0].rstrip('\r\n'),
+					sql_to_deactivete.rstrip('\r\n'),
+				)
+			)
+
 	else:
-		print "We have inactive rule {0!s}".format(rec['rulename'])
+		if vc_debug : print "["+str(datetime.now())+"] :We have inactive rule {0!s}".format(rec_deactiavate['rulename'])
 else:
-	print "We dont have rule serving that week"
+	if vc_debug : print "["+str(datetime.now())+"] : We dont have rule serving {0!s} weeks".format(weeks_to_deactivate)
 	
 #print rec['rulename']
 
