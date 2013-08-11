@@ -28,7 +28,6 @@ try:
 	table_name_base = config.get('rule-conf','table_name_base')
 	vc_debug = config.getboolean('rule-conf','vc_debug')
 	vc_sql_debug = config.getboolean('rule-conf','vc_sql_debug')
-	vc_sql_debug = False
 	if vc_sql_debug : print "["+str(datetime.datetime.now())+"] : db config : {0!s}".format(config_aegir)
 except ConfigParser.Error, e:
 	print "["+str(datetime.now())+"] : " + "Error : %s" % (e)
