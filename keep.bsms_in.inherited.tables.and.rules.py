@@ -32,6 +32,7 @@ except ConfigParser.Error, e:
 	print "["+str(datetime.now())+"] : " + "Error : %s" % (e)
 	sys.exit(1)
 	
+vc_sql_debug = False
 
 try:
     conn_aegir = psycopg2.connect(**config_aegir)
@@ -89,8 +90,8 @@ except psycopg2.Error, e:
 
 rec_deactiavate = cur_aegir.fetchone()
 
-if vc_debug : print "rules found : [{0!s}]".format(cur_aegir.rowcount)
-if vc_debug : print "active : [{0!s}]".format(rec_deactiavate['active'])
+#if vc_debug : print "rules found : [{0!s}]".format(cur_aegir.rowcount)
+#if vc_debug : print "active : [{0!s}]".format(rec_deactiavate['active'])
 
 if int(cur_aegir.rowcount) > 0:
 	# tva e O 
@@ -145,7 +146,15 @@ alter table
 	%s
 ;
 """)
-vc_sql_debug = False
+
+create_trigger_on_table_inherited = ("""
+CREATE TRIGGER counters_%s
+  AFTER INSERT OR DELETE
+  ON %s
+  FOR EACH ROW
+  EXECUTE PROCEDURE update_counters_bsmsin_trigger();
+""")
+
 for week in xrange(1,5):
 	inherited_table = (datetime.datetime.today() + datetime.timedelta(weeks=week)).strftime("bsms_in_p%Yw%U")
 	if vc_debug : print "["+str(datetime.datetime.now())+"] : Checking inherited table {0!s} existance..".format(inherited_table)
