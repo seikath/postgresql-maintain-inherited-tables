@@ -1,5 +1,6 @@
 # ecoding=utf8
-
+# 2013-08-11.22.02.43
+# dev.add.create.tables.v.1.1
 import psycopg2
 import psycopg2.extras
 import sys
