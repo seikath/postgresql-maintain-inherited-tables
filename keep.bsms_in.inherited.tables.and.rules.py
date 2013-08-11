@@ -17,7 +17,7 @@ config = ConfigParser.SafeConfigParser()
 # get the config at the db.config file in the same directory
 config_file=os.path.dirname(os.path.abspath(__file__))+'/'+os.path.basename(os.path.dirname(os.path.abspath(__file__)))+'.cfg'
 
-#print config_file
+import keep.bsms_in.inherited.tables.and.rules.inc
 
 try:
 	config.read(config_file)
