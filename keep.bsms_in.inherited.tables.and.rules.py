@@ -73,7 +73,7 @@ for week in xrange(-weeks_to_deactivate,-1):
 	if int(cur_aegir.rowcount) > 0:
 		# tva e O 
 		if rec_deactiavate['active'] == 'O':
-			print "We have active rule {0!s} to deactivate".format(rec_deactiavate['rulename'])
+			print "["+str(datetime.datetime.now())+"] : We have active rule {0!s} to deactivate".format(rec_deactiavate['rulename'])
 			sql_to_deactivete="alter table {0!s} disable rule {1!s};".format(table_name_base,rec_deactiavate['rulename'])
 			try:
 				cur_aegir.execute(sql_to_deactivete)
@@ -163,7 +163,7 @@ for week in xrange(1,weeks_to_activate):
 		if int(cur_aegir.rowcount) > 0:
 			# tva e O 
 			if rec_actiavate['active'] == 'D':
-				if vc_debug : print "["+str(datetime.datetime.now())+"] : We have active rule {0!s} to activate".format(rec_actiavate['rulename'])
+				if vc_debug : print "["+str(datetime.datetime.now())+"] : We have inactive rule {0!s} to activate".format(rec_actiavate['rulename'])
 				sql_to_activete="alter table {0!s} enable rule {1!s};".format(table_name_base,rec_actiavate['rulename'])
 				try:
 					cur_aegir.execute(sql_to_activete)
