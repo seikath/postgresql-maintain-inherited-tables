@@ -22,12 +22,20 @@ config_file=os.path.dirname(os.path.abspath(__file__))+'/'+os.path.basename(os.p
 
 try:
 	config.read(config_file)
-	config_db = dict(config.items("db-aegir-local"))
 	weeks_to_deactivate = config.getint('rule-conf','weeks_to_deactivate')
 	weeks_to_activate = config.getint('rule-conf','weeks_to_activate')
 	table_name_base = config.get('rule-conf','table_name_base')
 	vc_debug = config.getboolean('rule-conf','vc_debug')
 	vc_sql_debug = config.getboolean('rule-conf','vc_sql_debug')
+	if len(sys.argv) > 1 and sys.argv[1] == 'darkwater':
+		if vc_debug : print "["+str(datetime.datetime.now())+"] : Loading db config : db-darkwater-vpn"
+		config_db = dict(config.items("db-darkwater-vpn"))
+	elif len(sys.argv) > 1 and sys.argv[1] == 'aegir':
+		if vc_debug : print "["+str(datetime.datetime.now())+"] : Loading db config : db-aegir-local"
+		config_db = dict(config.items("db-aegir-local"))	
+	else:
+		if vc_debug : print "["+str(datetime.datetime.now())+"] : usege: {0!s} aegir|darkwater".format(sys.argv[0])
+		sys.exit(0)	
 	if vc_sql_debug : print "["+str(datetime.datetime.now())+"] : db config : {0!s}".format(config_db)
 except ConfigParser.Error, e:
 	print "["+str(datetime.now())+"] : " + "Error : %s" % (e)
@@ -73,7 +81,7 @@ for week in xrange(-weeks_to_deactivate,-1):
 	if int(cur_db.rowcount) > 0:
 		# tva e O 
 		if rec_deactiavate['active'] == 'O':
-			print "We have active rule {0!s} to deactivate".format(rec_deactiavate['rulename'])
+			print "["+str(datetime.datetime.now())+"] : We have active rule {0!s} to deactivate".format(rec_deactiavate['rulename'])
 			sql_to_deactivete="alter table {0!s} disable rule {1!s};".format(table_name_base,rec_deactiavate['rulename'])
 			try:
 				cur_db.execute(sql_to_deactivete)
