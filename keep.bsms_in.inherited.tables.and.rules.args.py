@@ -22,13 +22,13 @@ config_file=os.path.dirname(os.path.abspath(__file__))+'/'+os.path.basename(os.p
 
 try:
 	config.read(config_file)
-	config_aegir = dict(config.items("db-aegir-local"))
+	config_db = dict(config.items("db-aegir-local"))
 	weeks_to_deactivate = config.getint('rule-conf','weeks_to_deactivate')
 	weeks_to_activate = config.getint('rule-conf','weeks_to_activate')
 	table_name_base = config.get('rule-conf','table_name_base')
 	vc_debug = config.getboolean('rule-conf','vc_debug')
 	vc_sql_debug = config.getboolean('rule-conf','vc_sql_debug')
-	if vc_sql_debug : print "["+str(datetime.datetime.now())+"] : db config : {0!s}".format(config_aegir)
+	if vc_sql_debug : print "["+str(datetime.datetime.now())+"] : db config : {0!s}".format(config_db)
 except ConfigParser.Error, e:
 	print "["+str(datetime.now())+"] : " + "Error : %s" % (e)
 	sys.exit(1)
@@ -40,14 +40,14 @@ if not vc_debug : print "["+str(datetime.datetime.now())+"] : Debug set to false
 
 ### Initiate db link 
 try:
-    conn_aegir = psycopg2.connect(**config_aegir)
-    conn_aegir.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+    conn_db = psycopg2.connect(**config_db)
+    conn_db.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
 except:
-    print "["+str(datetime.now())+"] : Not able to connect:: %s !!".format(config_aegir)
+    print "["+str(datetime.now())+"] : Not able to connect:: %s !!".format(config_db)
     sys.exit(1)
 
 ### Open db cursor
-cur_aegir = conn_aegir.cursor(cursor_factory=psycopg2.extras.DictCursor)
+cur_db = conn_db.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
 
 
@@ -56,27 +56,27 @@ for week in xrange(-weeks_to_deactivate,-1):
 	try:
 		# 2013-08-10.21.54.14 check rule to deactivate
 		if vc_debug : print "["+str(datetime.datetime.now())+"] : Checking is the rule for {0!s} week is ebabled..".format(week)
-		if vc_sql_debug : print "["+str(datetime.datetime.now())+"] : SQL: {0!s}".format(cur_aegir.mogrify(query_rule,{'week' : week,'enabled' : "D",'tablename': table_name_base}))
-		cur_aegir.execute(query_rule,{'week' : week,'enabled' : "D",'tablename': table_name_base})
+		if vc_sql_debug : print "["+str(datetime.datetime.now())+"] : SQL: {0!s}".format(cur_db.mogrify(query_rule,{'week' : week,'enabled' : "D",'tablename': table_name_base}))
+		cur_db.execute(query_rule,{'week' : week,'enabled' : "D",'tablename': table_name_base})
 	except psycopg2.Error, e:
 		if vc_debug :
 			print ("["+str(datetime.datetime.now())+"] : {0!s} conencting to {1!s} at {2!s} as user {3!s}".
 				format(
 					e.args[0].rstrip('\r\n'),
-					config_aegir.get('host').rstrip('\r\n'),
-					config_aegir.get('dbname').rstrip('\r\n'),
-					config_aegir.get('user').rstrip('\r\n'),
+					config_db.get('host').rstrip('\r\n'),
+					config_db.get('dbname').rstrip('\r\n'),
+					config_db.get('user').rstrip('\r\n'),
 				)
 			)
-	rec_deactiavate = cur_aegir.fetchone()
+	rec_deactiavate = cur_db.fetchone()
 	
-	if int(cur_aegir.rowcount) > 0:
+	if int(cur_db.rowcount) > 0:
 		# tva e O 
 		if rec_deactiavate['active'] == 'O':
 			print "We have active rule {0!s} to deactivate".format(rec_deactiavate['rulename'])
 			sql_to_deactivete="alter table {0!s} disable rule {1!s};".format(table_name_base,rec_deactiavate['rulename'])
 			try:
-				cur_aegir.execute(sql_to_deactivete)
+				cur_db.execute(sql_to_deactivete)
 				if vc_debug : print "["+str(datetime.datetime.now())+"] : executed '{0!s}'".format(sql_to_deactivete)
 			except psycopg2.Error, e:
 				#if vc_debug :
@@ -97,9 +97,9 @@ if vc_debug : print "["+str(datetime.datetime.now())+"] : Start checking inherit
 for week in xrange(1,weeks_to_activate):
 	inherited_table = (datetime.datetime.today() + datetime.timedelta(weeks=week)).strftime("bsms_in_p%Yw%U")
 	if vc_debug : print "["+str(datetime.datetime.now())+"] : Checking inherited table {0!s} existance..".format(inherited_table)
-	if vc_sql_debug : print "["+str(datetime.datetime.now())+"] : SQL: {0!s}".format(cur_aegir.mogrify(query_table_exists,{'inherited_table' : inherited_table}))
+	if vc_sql_debug : print "["+str(datetime.datetime.now())+"] : SQL: {0!s}".format(cur_db.mogrify(query_table_exists,{'inherited_table' : inherited_table}))
 	try:
-		cur_aegir.execute(query_table_exists,{'inherited_table' : inherited_table})
+		cur_db.execute(query_table_exists,{'inherited_table' : inherited_table})
 	except psycopg2.Error, e:
 		if vc_debug :
 			print ("["+str(datetime.datetime.now())+"] : ERROR {0!s} executing {1!s}".
@@ -109,11 +109,11 @@ for week in xrange(1,weeks_to_activate):
 				)
 			)
 		sys.exit(1)
-	if int(cur_aegir.rowcount) > 0:
+	if int(cur_db.rowcount) > 0:
 		if vc_debug : print "["+str(datetime.datetime.now())+"] : Table {0!s} exists.".format(inherited_table)
 		if vc_debug : print "["+str(datetime.datetime.now())+"] : Checking if table {1!s} inherits {0!s}".format(table_name_base,inherited_table)
 		try:
-			cur_aegir.execute(query_table_is_inherited,{'inherited_table' : inherited_table,'table_name_base' : table_name_base})
+			cur_db.execute(query_table_is_inherited,{'inherited_table' : inherited_table,'table_name_base' : table_name_base})
 		except psycopg2.Error, e:
 			if vc_debug :
 				print ("["+str(datetime.datetime.now())+"] : ERROR {0!s} executing {1!s}".
@@ -123,16 +123,16 @@ for week in xrange(1,weeks_to_activate):
 					)
 				)
 			sys.exit(1)
-		if int(cur_aegir.rowcount) > 0:
+		if int(cur_db.rowcount) > 0:
 			if vc_debug : print "["+str(datetime.datetime.now())+"] : Table {1!s} inherits {0!s}".format(table_name_base,inherited_table)
 		else:
 			if vc_debug : print "["+str(datetime.datetime.now())+"] : Table {1!s} does not inherit {0!s}".format(table_name_base,inherited_table)
 			if vc_debug : print "["+str(datetime.datetime.now())+"] : Altering table {1!s} to inherit {0!s}".format(table_name_base,inherited_table)
 			alter_table_inherit_tmp = alter_table_inherit % (inherited_table,'',table_name_base);
-			if vc_sql_debug : print cur_aegir.mogrify(alter_table_inherit_tmp)
+			if vc_sql_debug : print cur_db.mogrify(alter_table_inherit_tmp)
 			try:
-				cur_aegir.execute(alter_table_inherit_tmp)
-				if vc_sql_debug : print cur_aegir.mogrify(alter_table_inherit_tmp)
+				cur_db.execute(alter_table_inherit_tmp)
+				if vc_sql_debug : print cur_db.mogrify(alter_table_inherit_tmp)
 			except psycopg2.Error, e:
 				if vc_debug :
 					print ("["+str(datetime.datetime.now())+"] : ERROR {0!s} executing {1!s}".
@@ -146,27 +146,27 @@ for week in xrange(1,weeks_to_activate):
 		try:
 			# 2013-08-10.21.54.14 check rule to activate
 			if vc_debug : print "["+str(datetime.datetime.now())+"] : Checking is the rule for {0!s} week is ebabled..".format(week)
-			if vc_sql_debug : print "["+str(datetime.datetime.now())+"] : SQL: {0!s}".format(cur_aegir.mogrify(query_rule,{'week' : week,'enabled' : "D",'tablename': table_name_base}))
-			cur_aegir.execute(query_rule,{'week' : week,'enabled' : "D",'tablename': table_name_base})
+			if vc_sql_debug : print "["+str(datetime.datetime.now())+"] : SQL: {0!s}".format(cur_db.mogrify(query_rule,{'week' : week,'enabled' : "D",'tablename': table_name_base}))
+			cur_db.execute(query_rule,{'week' : week,'enabled' : "D",'tablename': table_name_base})
 		except psycopg2.Error, e:
 			if vc_debug :
 				print ("["+str(datetime.datetime.now())+"] : {0!s} conencting to {1!s} at {2!s} as user {3!s}".
 					format(
 						e.args[0].rstrip('\r\n'),
-						config_aegir.get('host').rstrip('\r\n'),
-						config_aegir.get('dbname').rstrip('\r\n'),
-						config_aegir.get('user').rstrip('\r\n'),
+						config_db.get('host').rstrip('\r\n'),
+						config_db.get('dbname').rstrip('\r\n'),
+						config_db.get('user').rstrip('\r\n'),
 					)
 				)
-		rec_actiavate = cur_aegir.fetchone()
+		rec_actiavate = cur_db.fetchone()
 		
-		if int(cur_aegir.rowcount) > 0:
+		if int(cur_db.rowcount) > 0:
 			# tva e O 
 			if rec_actiavate['active'] == 'D':
 				if vc_debug : print "["+str(datetime.datetime.now())+"] : We have active rule {0!s} to activate".format(rec_actiavate['rulename'])
 				sql_to_activete="alter table {0!s} enable rule {1!s};".format(table_name_base,rec_actiavate['rulename'])
 				try:
-					cur_aegir.execute(sql_to_activete)
+					cur_db.execute(sql_to_activete)
 					if vc_debug : print "["+str(datetime.datetime.now())+"] : executed '{0!s}'".format(sql_to_activete)
 				except psycopg2.Error, e:
 					#if vc_debug :
@@ -187,8 +187,8 @@ for week in xrange(1,weeks_to_activate):
 
 
 
-cur_aegir.close()
-conn_aegir.close()
+cur_db.close()
+conn_db.close()
 sys.exit (0)
 
 
