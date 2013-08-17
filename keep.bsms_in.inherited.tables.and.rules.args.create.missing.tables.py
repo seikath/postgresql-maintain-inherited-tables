@@ -7,6 +7,7 @@ import psycopg2.extras
 import sys
 #import datetime
 from datetime import timedelta,date
+import calendar
 import datetime
 #import date
 import ConfigParser
@@ -46,7 +47,20 @@ if not vc_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] 
 ### CONFIG ENDS
 #################################################
 
+recent_week=date.isocalendar(datetime.datetime.today())[1]
 
+print date.isoformat(datetime.datetime.today()+datetime.timedelta(weeks=-5))
+print date.weekday(datetime.datetime.today()+datetime.timedelta(weeks=-5))
+relative_first_day_of_week=date.isoformat(datetime.datetime.today()+datetime.timedelta(weeks=-5)-datetime.timedelta(days=date.weekday(datetime.datetime.today()+datetime.timedelta(weeks=-5))))
+relative_last_day_of_week=date.isoformat(datetime.datetime.today()+datetime.timedelta(weeks=-5)-datetime.timedelta(days=date.weekday(datetime.datetime.today()+datetime.timedelta(weeks=-5))) + datetime.timedelta(days=+6))
+print "relative_first_day_of_week : {0!s}".format(relative_first_day_of_week)
+print "relative_last_day_of_week : {0!s}".format(relative_last_day_of_week)
+print  date.isoformat(datetime.datetime.today()+datetime.timedelta(weeks=-5)-datetime.timedelta(days=date.weekday(datetime.datetime.today()+datetime.timedelta(weeks=-5))))
+print datetime.datetime.today() + datetime.timedelta(weeks=-5)
+#print datetime.datetime.weekday(datetime.datetime.today() + datetime.timedelta(weeks=-5))
+#print str(datetime.datetime.now()) + "==>" + str(calendar.firstweekday()) + "==>" + str(date.weekday(datetime.datetime.now()+datetime.timedelta))
+
+sys.exit(0)
 ### Initiate db link 
 try:
     conn_db = psycopg2.connect(**config_db)
