@@ -9,16 +9,9 @@ SELECT n.nspname AS schemaname, c.relname AS tablename, r.rulename, r.ev_enabled
   WHERE true 
 -- and r.rulename <> '_RETURN'::name
 and c.relname = %(tablename)s
-and  r.rulename like 'route_rule_bsms_in_p' || extract(year from now()+ interval '%(week)s week') || '%%'
+-- and  r.rulename like 'route_rule_bsms_in_p' || extract(year from now()+ interval '%(week)s week') || '%%'
 -- and r.ev_enabled <> %(enabled)s 
-and r.rulename  in (
-	select  
-	'route_rule_bsms_in_p' 
-	|| extract(year from now()+ interval '%(week)s week') 
-	|| 'w' || extract(week from now() + interval '%(week)s week') 
-	as  rulename
-	limit 1
-	)
+and r.rulename = %(rulename)s
 order by r.rulename 
 limit 1
 ;
@@ -66,9 +59,9 @@ CREATE TRIGGER counters_%s
 
 	
 create_missing_inherited_table= ("""
--- DROP TABLE {0!s};
+-- DROP TABLE %(tablename)s;
 
-CREATE TABLE {0!s}
+CREATE TABLE %(tablename)s
 (
   id bigint NOT NULL DEFAULT nextval('bsms_in_id_seq'::regclass),
   client_sms_id character varying(100) NOT NULL,
@@ -95,164 +88,172 @@ CREATE TABLE {0!s}
   hlr integer DEFAULT 0,
   validity integer DEFAULT 1440,
   token character varying(100),
-  CONSTRAINT {0!s}_id_pkey PRIMARY KEY (id ),
-  CONSTRAINT {0!s}_uniq_ext_id_sid UNIQUE (ext_id , service_id ),
---  CONSTRAINT {0!s}_partition_check CHECK (otime >= '2013-09-23 00:00:00'::timestamp without time zone AND otime < '2013-09-30 00:00:00'::timestamp without time zone)
-  CONSTRAINT {0!s}_partition_check CHECK (otime >= '{1!s} 00:00:00'::timestamp without time zone AND otime < '{2!s} 00:00:00'::timestamp without time zone)
+  CONSTRAINT %(tablename)s_id_pkey PRIMARY KEY (id ),
+  CONSTRAINT %(tablename)s_uniq_ext_id_sid UNIQUE (ext_id , service_id ),
+  CONSTRAINT %(tablename)s_partition_check CHECK (otime >= '%(first_day_of_week)s 00:00:00'::timestamp without time zone AND otime < '%(next_first_day_of_week)s 00:00:00'::timestamp without time zone)
 )
 WITH (
   OIDS=FALSE
 );
-ALTER TABLE {0!s}
+ALTER TABLE %(tablename)s
   OWNER TO seik;
-GRANT ALL ON TABLE {0!s} TO seik;
-GRANT ALL ON TABLE {0!s} TO mtel;
-GRANT INSERT, TRIGGER ON TABLE {0!s} TO raiffeisen;
+GRANT ALL ON TABLE %(tablename)s TO seik;
+GRANT ALL ON TABLE %(tablename)s TO mtel;
+GRANT INSERT, TRIGGER ON TABLE %(tablename)s TO raiffeisen;
 
--- Index: {0!s}.{0!s}_client_sms_id_idx
+-- Index: %(tablename)s.%(tablename)s_client_sms_id_idx
 
--- DROP INDEX {0!s}.{0!s}_client_sms_id_idx;
+-- DROP INDEX %(tablename)s.%(tablename)s_client_sms_id_idx;
 
-CREATE INDEX {0!s}_client_sms_id_idx
-  ON {0!s}
+CREATE INDEX %(tablename)s_client_sms_id_idx
+  ON %(tablename)s
   USING btree
   (client_sms_id COLLATE pg_catalog."default" );
 
--- Index: {0!s}.{0!s}_ext_id_idx
+-- Index: %(tablename)s.%(tablename)s_ext_id_idx
 
--- DROP INDEX {0!s}.{0!s}_ext_id_idx;
+-- DROP INDEX %(tablename)s.%(tablename)s_ext_id_idx;
 
-CREATE INDEX {0!s}_ext_id_idx
-  ON {0!s}
+CREATE INDEX %(tablename)s_ext_id_idx
+  ON %(tablename)s
   USING btree
   (ext_id COLLATE pg_catalog."default" );
 
--- Index: {0!s}.{0!s}_forced_smsc_idx
+-- Index: %(tablename)s.%(tablename)s_forced_smsc_idx
 
--- DROP INDEX {0!s}.{0!s}_forced_smsc_idx;
+-- DROP INDEX %(tablename)s.%(tablename)s_forced_smsc_idx;
 
-CREATE INDEX {0!s}_forced_smsc_idx
-  ON {0!s}
+CREATE INDEX %(tablename)s_forced_smsc_idx
+  ON %(tablename)s
   USING btree
   (forced_smsc COLLATE pg_catalog."default" );
 
--- Index: {0!s}.{0!s}_msisdn_idx
+-- Index: %(tablename)s.%(tablename)s_msisdn_idx
 
--- DROP INDEX {0!s}.{0!s}_msisdn_idx;
+-- DROP INDEX %(tablename)s.%(tablename)s_msisdn_idx;
 
-CREATE INDEX {0!s}_msisdn_idx
-  ON {0!s}
+CREATE INDEX %(tablename)s_msisdn_idx
+  ON %(tablename)s
   USING btree
   (msisdn );
 
--- Index: {0!s}.{0!s}_oday_idx
+-- Index: %(tablename)s.%(tablename)s_oday_idx
 
--- DROP INDEX {0!s}.{0!s}_oday_idx;
+-- DROP INDEX %(tablename)s.%(tablename)s_oday_idx;
 
-CREATE INDEX {0!s}_oday_idx
-  ON {0!s}
+CREATE INDEX %(tablename)s_oday_idx
+  ON %(tablename)s
   USING btree
   (date_part('day'::text, otime) );
 
--- Index: {0!s}.{0!s}_oeyar_idx
+-- Index: %(tablename)s.%(tablename)s_oeyar_idx
 
--- DROP INDEX {0!s}.{0!s}_oeyar_idx;
+-- DROP INDEX %(tablename)s.%(tablename)s_oeyar_idx;
 
-CREATE INDEX {0!s}_oeyar_idx
-  ON {0!s}
+CREATE INDEX %(tablename)s_oeyar_idx
+  ON %(tablename)s
   USING btree
   (date_part('year'::text, otime) );
 
--- Index: {0!s}.{0!s}_omonth_idx
+-- Index: %(tablename)s.%(tablename)s_omonth_idx
 
--- DROP INDEX {0!s}.{0!s}_omonth_idx;
+-- DROP INDEX %(tablename)s.%(tablename)s_omonth_idx;
 
-CREATE INDEX {0!s}_omonth_idx
-  ON {0!s}
+CREATE INDEX %(tablename)s_omonth_idx
+  ON %(tablename)s
   USING btree
   (date_part('month'::text, otime) );
 
--- Index: {0!s}.{0!s}_otime_idx
+-- Index: %(tablename)s.%(tablename)s_otime_idx
 
--- DROP INDEX {0!s}.{0!s}_otime_idx;
+-- DROP INDEX %(tablename)s.%(tablename)s_otime_idx;
 
-CREATE INDEX {0!s}_otime_idx
-  ON {0!s}
+CREATE INDEX %(tablename)s_otime_idx
+  ON %(tablename)s
   USING btree
   (otime );
 
--- Index: {0!s}.{0!s}_polytype_id
+-- Index: %(tablename)s.%(tablename)s_polytype_id
 
--- DROP INDEX {0!s}.{0!s}_polytype_id;
+-- DROP INDEX %(tablename)s.%(tablename)s_polytype_id;
 
-CREATE INDEX {0!s}_polytype_id
-  ON {0!s}
+CREATE INDEX %(tablename)s_polytype_id
+  ON %(tablename)s
   USING btree
   (polytype_id COLLATE pg_catalog."default" );
 
--- Index: {0!s}.{0!s}_priority_idx
+-- Index: %(tablename)s.%(tablename)s_priority_idx
 
--- DROP INDEX {0!s}.{0!s}_priority_idx;
+-- DROP INDEX %(tablename)s.%(tablename)s_priority_idx;
 
-CREATE INDEX {0!s}_priority_idx
-  ON {0!s}
+CREATE INDEX %(tablename)s_priority_idx
+  ON %(tablename)s
   USING btree
   (priority );
 
--- Index: {0!s}.{0!s}_processed_idx
+-- Index: %(tablename)s.%(tablename)s_processed_idx
 
--- DROP INDEX {0!s}.{0!s}_processed_idx;
+-- DROP INDEX %(tablename)s.%(tablename)s_processed_idx;
 
-CREATE INDEX {0!s}_processed_idx
-  ON {0!s}
+CREATE INDEX %(tablename)s_processed_idx
+  ON %(tablename)s
   USING btree
   (processed );
 
--- Index: {0!s}.{0!s}_service_id_idx
+-- Index: %(tablename)s.%(tablename)s_service_id_idx
 
--- DROP INDEX {0!s}.{0!s}_service_id_idx;
+-- DROP INDEX %(tablename)s.%(tablename)s_service_id_idx;
 
-CREATE INDEX {0!s}_service_id_idx
-  ON {0!s}
+CREATE INDEX %(tablename)s_service_id_idx
+  ON %(tablename)s
   USING btree
   (service_id );
 
--- Index: {0!s}.{0!s}_shortcode_idx
+-- Index: %(tablename)s.%(tablename)s_shortcode_idx
 
--- DROP INDEX {0!s}.{0!s}_shortcode_idx;
+-- DROP INDEX %(tablename)s.%(tablename)s_shortcode_idx;
 
-CREATE INDEX {0!s}_shortcode_idx
-  ON {0!s}
+CREATE INDEX %(tablename)s_shortcode_idx
+  ON %(tablename)s
   USING btree
   (shortcode COLLATE pg_catalog."default" );
 
--- Index: {0!s}.new_{0!s}_otime_idx
+-- Index: %(tablename)s.new_%(tablename)s_otime_idx
 
--- DROP INDEX {0!s}.new_{0!s}_otime_idx;
+-- DROP INDEX %(tablename)s.new_%(tablename)s_otime_idx;
 
-CREATE INDEX new_{0!s}_otime_idx
-  ON {0!s}
+CREATE INDEX new_%(tablename)s_otime_idx
+  ON %(tablename)s
   USING btree
   (date_trunc('month'::text, otime) );
 
--- Index: {0!s}.test_idx_protelecom_{0!s}
+-- Index: %(tablename)s.test_idx_protelecom_%(tablename)s
 
--- DROP INDEX {0!s}.test_idx_protelecom_{0!s};
+-- DROP INDEX %(tablename)s.test_idx_protelecom_%(tablename)s;
 
-CREATE INDEX test_idx_protelecom_{0!s}
-  ON {0!s}
+CREATE INDEX test_idx_protelecom_%(tablename)s
+  ON %(tablename)s
   USING btree
   (service_id , date_part('year'::text, otime) , date_part('month'::text, otime) );
 
 
--- Trigger: counters_{0!s} on {0!s}
+-- Trigger: counters_%(tablename)s on %(tablename)s
 
--- DROP TRIGGER counters_{0!s} ON {0!s};
+-- DROP TRIGGER counters_%(tablename)s ON %(tablename)s;
 
-CREATE TRIGGER counters_{0!s}
+CREATE TRIGGER counters_%(tablename)s
   AFTER INSERT OR DELETE
-  ON {0!s}
+  ON %(tablename)s
   FOR EACH ROW
   EXECUTE PROCEDURE update_counters_bsmsin_trigger();
 
+""")
+
+create_rule_on_table_inherited = ("""
+-- DROP RULE route_rule_bsms_in_p%(tablename)s ON bsms_in;
+
+CREATE OR REPLACE RULE route_rule_bsms_in_p%(tablename)s AS
+    ON INSERT TO bsms_in
+   WHERE new.otime >= '%(first_day_of_week)s 00:00:00'::timestamp without time zone AND new.otime < '%(next_first_day_of_week)s 00:00:00'::timestamp without time zone DO INSTEAD  INSERT INTO bsms_in_p%(tablename)s (client_sms_id, ext_id, msisdn, shortcode, mesg, operator_id, otime, ptime, processed, service_id, service_url, service_url_responce, request_ip, forced_smsc, cyrilic, wap_push, polytype_responce, priority, flash, polytype_id, retry, hlr, validity, token) 
+  VALUES (new.client_sms_id, new.ext_id, new.msisdn, new.shortcode, new.mesg, new.operator_id, new.otime, new.ptime, new.processed, new.service_id, new.service_url, new.service_url_responce, new.request_ip, new.forced_smsc, new.cyrilic, new.wap_push, new.polytype_responce, new.priority, new.flash, new.polytype_id, new.retry, new.hlr, new.validity, new.token);
 """)
