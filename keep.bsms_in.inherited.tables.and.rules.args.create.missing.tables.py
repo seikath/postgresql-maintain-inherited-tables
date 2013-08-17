@@ -47,19 +47,26 @@ if not vc_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] 
 ### CONFIG ENDS
 #################################################
 
+diff_week=20
 recent_week=date.isocalendar(datetime.datetime.today())[1]
-
-print date.isoformat(datetime.datetime.today()+datetime.timedelta(weeks=-5))
-print date.weekday(datetime.datetime.today()+datetime.timedelta(weeks=-5))
-relative_first_day_of_week=date.isoformat(datetime.datetime.today()+datetime.timedelta(weeks=-5)-datetime.timedelta(days=date.weekday(datetime.datetime.today()+datetime.timedelta(weeks=-5))))
-relative_last_day_of_week=date.isoformat(datetime.datetime.today()+datetime.timedelta(weeks=-5)-datetime.timedelta(days=date.weekday(datetime.datetime.today()+datetime.timedelta(weeks=-5))) + datetime.timedelta(days=+6))
+print date.isoformat(datetime.datetime.today()+datetime.timedelta(weeks=diff_week))
+print date.weekday(datetime.datetime.today()+datetime.timedelta(weeks=diff_week))
+relative_first_day_of_week=date.isoformat(datetime.datetime.today()+datetime.timedelta(weeks=diff_week)-datetime.timedelta(days=date.weekday(datetime.datetime.today()+datetime.timedelta(weeks=diff_week))))
+relative_last_day_of_week=date.isoformat(datetime.datetime.today()+datetime.timedelta(weeks=diff_week)-datetime.timedelta(days=date.weekday(datetime.datetime.today()+datetime.timedelta(weeks=diff_week))) + datetime.timedelta(days=+6))
+relative_week='{0:02d}'.format(date.isocalendar(datetime.datetime.today()+datetime.timedelta(weeks=diff_week))[1])
+relative_year=date.isocalendar(datetime.datetime.today()+datetime.timedelta(weeks=diff_week))[0]
 print "relative_first_day_of_week : {0!s}".format(relative_first_day_of_week)
 print "relative_last_day_of_week : {0!s}".format(relative_last_day_of_week)
-print  date.isoformat(datetime.datetime.today()+datetime.timedelta(weeks=-5)-datetime.timedelta(days=date.weekday(datetime.datetime.today()+datetime.timedelta(weeks=-5))))
-print datetime.datetime.today() + datetime.timedelta(weeks=-5)
+print "relative_week : {0!s}".format(relative_week)
+# sys.exit(0)
+datas = date.timetuple(datetime.datetime.today()+datetime.timedelta(weeks=diff_week)-datetime.timedelta(days=date.weekday(datetime.datetime.today()+datetime.timedelta(weeks=diff_week))))
+print datas
+print datetime.datetime.today() + datetime.timedelta(weeks=diff_week)
 #print datetime.datetime.weekday(datetime.datetime.today() + datetime.timedelta(weeks=-5))
 #print str(datetime.datetime.now()) + "==>" + str(calendar.firstweekday()) + "==>" + str(date.weekday(datetime.datetime.now()+datetime.timedelta))
 
+
+print create_missing_inherited_table.format('bsms_in_p'+str(relative_year)+'w'+str(relative_week),relative_first_day_of_week,relative_last_day_of_week)
 sys.exit(0)
 ### Initiate db link 
 try:
