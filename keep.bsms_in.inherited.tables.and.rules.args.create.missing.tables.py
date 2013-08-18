@@ -47,25 +47,20 @@ if not vc_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] 
 ### CONFIG ENDS
 #################################################
 
-#diff_week=3
-##recent_week=date.isocalendar(datetime.datetime.today())[1]
-##print date.isoformat(datetime.datetime.today()+datetime.timedelta(weeks=diff_week))
-##print date.weekday(datetime.datetime.today()+datetime.timedelta(weeks=diff_week))
-#relative_first_day_of_week=date.isoformat(datetime.datetime.today()+datetime.timedelta(weeks=diff_week)-datetime.timedelta(days=date.weekday(datetime.datetime.today()+datetime.timedelta(weeks=diff_week))))
-#relative_next_first_day_of_week=date.isoformat(datetime.datetime.today()+datetime.timedelta(weeks=diff_week)-datetime.timedelta(days=date.weekday(datetime.datetime.today()+datetime.timedelta(weeks=diff_week))) + datetime.timedelta(days=+7))
-#relative_week='{0:02d}'.format(date.isocalendar(datetime.datetime.today()+datetime.timedelta(weeks=diff_week))[1])
-#relative_year=date.isocalendar(datetime.datetime.today()+datetime.timedelta(weeks=diff_week))[0]
-#print "relative_first_day_of_week : {0!s}".format(relative_first_day_of_week)
-#print "relative_next_first_day_of_week : {0!s}".format(relative_next_first_day_of_week)
-#print "relative_week : {0!s}".format(relative_week)
-# sys.exit(0)
-#print datetime.datetime.weekday(datetime.datetime.today() + datetime.timedelta(weeks=-5))
-#print str(datetime.datetime.now()) + "==>" + str(calendar.firstweekday()) + "==>" + str(date.weekday(datetime.datetime.now()+datetime.timedelta))
 
+def sql_execute(cursor,sql,vc_sql_debug=False):
+	try:
+		cursor.execute(sql)
+		if vc_sql_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] executed '{0!s}'".format(sql)
+		return cursor
+	except psycopg2.Error, e:
+		print ("["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] ERROR : {0!s} on executing of {1!s}".
+			format(
+				e.args[0].rstrip('\r\n'),
+				sql.rstrip('\r\n'),
+			)
+		)
 
-#print create_missing_inherited_table.format('bsms_in_p'+str(relative_year)+'w'+str(relative_week),relative_first_day_of_week,relative_next_first_day_of_week)
-#print create_rule_on_table_inherited.format(str(relative_year)+'w'+str(relative_week),relative_first_day_of_week,relative_next_first_day_of_week)
-#sys.exit(0)
 ### Initiate db link 
 try:
     conn_db = psycopg2.connect(**config_db)
@@ -86,21 +81,23 @@ for week in xrange(-weeks_to_deactivate,-1):
 	relative_year=date.isocalendar(datetime.datetime.today()+datetime.timedelta(weeks=week))[0]
 	rulename='route_rule_bsms_in_p{0!s}w{1!s}'.format(relative_year,relative_week)
 	#print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] {0!s}".format(week)
-	try:
-		# 2013-08-10.21.54.14 check rule to deactivate
-		if vc_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] Checking is the rule for {0!s} week is ebabled..".format(week)
-		if vc_sql_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] SQL: {0!s}".format(cur_db.mogrify(query_rule,{'week' : week,'enabled' : "D",'tablename': table_name_base,'rulename':rulename}))
-		cur_db.execute(query_rule,{'week' : week,'enabled' : "D",'tablename': table_name_base,'rulename':rulename})
-	except psycopg2.Error, e:
-		if vc_debug :
-			print ("["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] {0!s} conencting to {1!s} at {2!s} as user {3!s}".
-				format(
-					e.args[0].rstrip('\r\n'),
-					config_db.get('host').rstrip('\r\n'),
-					config_db.get('dbname').rstrip('\r\n'),
-					config_db.get('user').rstrip('\r\n'),
-				)
-			)
+	if vc_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] Checking is the rule for {0!s} week is ebabled..".format(week)
+	sql_check_rule_to_deactivate=cur_db.mogrify(query_rule,{'week' : week,'enabled' : "D",'tablename': table_name_base,'rulename':rulename})
+	if vc_sql_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] SQL: {0!s}".format(sql_check_rule_to_deactivate)
+	#try:
+		## 2013-08-10.21.54.14 check rule to deactivate
+		#cur_db.execute(sql_check_rule_to_deactivate)
+	#except psycopg2.Error, e:
+		#if vc_debug :
+			#print ("["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] {0!s} conencting to {1!s} at {2!s} as user {3!s}".
+				#format(
+					#e.args[0].rstrip('\r\n'),
+					#config_db.get('host').rstrip('\r\n'),
+					#config_db.get('dbname').rstrip('\r\n'),
+					#config_db.get('user').rstrip('\r\n'),
+				#)
+			#)
+	cur_db=sql_execute(cur_db,sql_check_rule_to_deactivate,vc_sql_debug)
 	rec_deactiavate = cur_db.fetchone()
 	
 	if int(cur_db.rowcount) > 0:
@@ -183,7 +180,7 @@ for week in xrange(1,weeks_to_activate):
 		# Check corresponsding rule 
 		try:
 			# 2013-08-10.21.54.14 check rule to activate
-			if vc_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] Checking is the rule {1!s} for {0!s} week is ebabled..".format(week,rulename)
+			if vc_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] Checking if the rule {1!s} for {0!s} week is ebabled..".format(week,rulename)
 			if vc_sql_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] SQL: {0!s}".format(cur_db.mogrify(query_rule,{'week' : week,'enabled' : "D",'tablename': table_name_base,'rulename':rulename}))
 			cur_db.execute(query_rule,{'week' : week,'enabled' : "D",'tablename': table_name_base,'rulename':rulename})
 		except psycopg2.Error, e:
@@ -201,7 +198,7 @@ for week in xrange(1,weeks_to_activate):
 		if int(cur_db.rowcount) > 0:
 			# tva e O 
 			if rec_actiavate['active'] == 'D':
-				if vc_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] We have active rule {0!s} to activate".format(rec_actiavate['rulename'])
+				if vc_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] We have nonactive rule {0!s} to activate".format(rec_actiavate['rulename'])
 				sql_to_activete="alter table {0!s} enable rule {1!s};".format(table_name_base,rec_actiavate['rulename'])
 				try:
 					cur_db.execute(sql_to_activete)
@@ -219,20 +216,23 @@ for week in xrange(1,weeks_to_activate):
 				if vc_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] We have active rule {0!s}".format(rec_actiavate['rulename'])
 		else:
 			if vc_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] We dont have rule {1!s} serving {0!s} weeks".format(week,rulename)
+			sql_create_missing_rule=create_rule_for_the_table_inherited % {'tablename':'bsms_in_p'+str(relative_year)+'w'+str(relative_week),'table_name_base':table_name_base,'rulename':rulename,'first_day_of_week':relative_first_day_of_week,'next_first_day_of_week':relative_next_first_day_of_week}
+			if vc_sql_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] SQL: {0!s}".format(cur_db.mogrify(sql_create_missing_rule))
+			try:
+				cur_db.execute(sql_create_missing_rule)
+				if vc_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] created rule '{0!s}' on table {1!s} for filling table {2!s} ".format(rulename,table_name_base,'bsms_in_p'+str(relative_year)+'w'+str(relative_week))
+			except psycopg2.Error, e:
+				#if vc_debug :
+				print ("["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] ERROR : {0!s} on executing of {1!s}".
+					format(
+						e.args[0].rstrip('\r\n'),
+						sql_create_missing_rule.rstrip('\r\n'),
+					)
+				)
 	else:
-		if vc_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] Table {0!s} does NO exist.".format(inherited_table)
+		if vc_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] Table {0!s} does NOT exist.".format(inherited_table)
 		sql_create_missing_table=create_missing_inherited_table % {'tablename':'bsms_in_p'+str(relative_year)+'w'+str(relative_week),'first_day_of_week':relative_first_day_of_week,'next_first_day_of_week':relative_next_first_day_of_week}
 		if vc_sql_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] SQL: {0!s}".format(cur_db.mogrify(sql_create_missing_table))
-		#relative_first_day_of_week=date.isoformat(datetime.datetime.today()+datetime.timedelta(weeks=week)-datetime.timedelta(days=date.weekday(datetime.datetime.today()+datetime.timedelta(weeks=week))))
-		#relative_next_first_day_of_week=date.isoformat(datetime.datetime.today()+datetime.timedelta(weeks=week)-datetime.timedelta(days=date.weekday(datetime.datetime.today()+datetime.timedelta(weeks=week))) + datetime.timedelta(days=+7))
-		#relative_week='{0:02d}'.format(date.isocalendar(datetime.datetime.today()+datetime.timedelta(weeks=week))[1])
-		#relative_year=date.isocalendar(datetime.datetime.today()+datetime.timedelta(weeks=week))[0]
-		#print "relative_first_day_of_week : {0!s}".format(relative_first_day_of_week)
-		#print "relative_next_first_day_of_week : {0!s}".format(relative_next_first_day_of_week)
-		#print "relative_week : {0!s}".format(relative_week)
-		#print "relative_year : {0!s}".format(relative_year)
-		#if vc_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] To be executed SQL: ".format(create_missing_inherited_table.format(inherited_table,))
-		#create_missing_inherited_table.format('bsms_in_p'+str(relative_year)+'w'+str(relative_week),relative_first_day_of_week,relative_next_first_day_of_week)
 		try:
 			cur_db.execute(sql_create_missing_table)
 			if vc_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] created table '{0!s}'".format('bsms_in_p'+str(relative_year)+'w'+str(relative_week))
@@ -244,8 +244,21 @@ for week in xrange(1,weeks_to_activate):
 					sql_create_missing_table.rstrip('\r\n'),
 				)
 			)
-
-
+		if vc_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] We might NOT have rule {1!s} serving {0!s} weeks".format(week,rulename)
+		sql_create_missing_rule=create_rule_for_the_table_inherited % {'tablename':'bsms_in_p'+str(relative_year)+'w'+str(relative_week),'table_name_base':table_name_base,'rulename':rulename,'first_day_of_week':relative_first_day_of_week,'next_first_day_of_week':relative_next_first_day_of_week}
+		if vc_sql_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] SQL: {0!s}".format(cur_db.mogrify(sql_create_missing_rule))
+		try:
+			cur_db.execute(sql_create_missing_rule)
+			if vc_debug : print "["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] created rule '{0!s}' on table {1!s} for filling table {2!s} ".format(rulename,table_name_base,'bsms_in_p'+str(relative_year)+'w'+str(relative_week))
+		except psycopg2.Error, e:
+			#if vc_debug :
+			print ("["+str(datetime.datetime.now())+"] : ["+sys.argv[1]+"] ERROR : {0!s} on executing of {1!s}".
+				format(
+					e.args[0].rstrip('\r\n'),
+					sql_create_missing_rule.rstrip('\r\n'),
+				)
+			)
+# closing db cursor, db links
 cur_db.close()
 conn_db.close()
 sys.exit (0)

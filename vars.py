@@ -108,7 +108,7 @@ GRANT INSERT, TRIGGER ON TABLE %(tablename)s TO raiffeisen;
 CREATE INDEX %(tablename)s_client_sms_id_idx
   ON %(tablename)s
   USING btree
-  (client_sms_id COLLATE pg_catalog."default" );
+  (client_sms_id);
 
 -- Index: %(tablename)s.%(tablename)s_ext_id_idx
 
@@ -117,7 +117,7 @@ CREATE INDEX %(tablename)s_client_sms_id_idx
 CREATE INDEX %(tablename)s_ext_id_idx
   ON %(tablename)s
   USING btree
-  (ext_id COLLATE pg_catalog."default" );
+  (ext_id);
 
 -- Index: %(tablename)s.%(tablename)s_forced_smsc_idx
 
@@ -126,7 +126,7 @@ CREATE INDEX %(tablename)s_ext_id_idx
 CREATE INDEX %(tablename)s_forced_smsc_idx
   ON %(tablename)s
   USING btree
-  (forced_smsc COLLATE pg_catalog."default" );
+  (forced_smsc);
 
 -- Index: %(tablename)s.%(tablename)s_msisdn_idx
 
@@ -180,7 +180,7 @@ CREATE INDEX %(tablename)s_otime_idx
 CREATE INDEX %(tablename)s_polytype_id
   ON %(tablename)s
   USING btree
-  (polytype_id COLLATE pg_catalog."default" );
+  (polytype_id);
 
 -- Index: %(tablename)s.%(tablename)s_priority_idx
 
@@ -216,7 +216,7 @@ CREATE INDEX %(tablename)s_service_id_idx
 CREATE INDEX %(tablename)s_shortcode_idx
   ON %(tablename)s
   USING btree
-  (shortcode COLLATE pg_catalog."default" );
+  (shortcode);
 
 -- Index: %(tablename)s.new_%(tablename)s_otime_idx
 
@@ -249,11 +249,11 @@ CREATE TRIGGER counters_%(tablename)s
 
 """)
 
-create_rule_on_table_inherited = ("""
--- DROP RULE route_rule_bsms_in_p%(tablename)s ON bsms_in;
+create_rule_for_the_table_inherited = ("""
+-- DROP RULE %(rulename)s ON %(table_name_base)s;
 
-CREATE OR REPLACE RULE route_rule_bsms_in_p%(tablename)s AS
-    ON INSERT TO bsms_in
-   WHERE new.otime >= '%(first_day_of_week)s 00:00:00'::timestamp without time zone AND new.otime < '%(next_first_day_of_week)s 00:00:00'::timestamp without time zone DO INSTEAD  INSERT INTO bsms_in_p%(tablename)s (client_sms_id, ext_id, msisdn, shortcode, mesg, operator_id, otime, ptime, processed, service_id, service_url, service_url_responce, request_ip, forced_smsc, cyrilic, wap_push, polytype_responce, priority, flash, polytype_id, retry, hlr, validity, token) 
+CREATE OR REPLACE RULE %(rulename)s AS
+    ON INSERT TO %(table_name_base)s
+   WHERE new.otime >= '%(first_day_of_week)s 00:00:00'::timestamp without time zone AND new.otime < '%(next_first_day_of_week)s 00:00:00'::timestamp without time zone DO INSTEAD  INSERT INTO %(tablename)s (client_sms_id, ext_id, msisdn, shortcode, mesg, operator_id, otime, ptime, processed, service_id, service_url, service_url_responce, request_ip, forced_smsc, cyrilic, wap_push, polytype_responce, priority, flash, polytype_id, retry, hlr, validity, token) 
   VALUES (new.client_sms_id, new.ext_id, new.msisdn, new.shortcode, new.mesg, new.operator_id, new.otime, new.ptime, new.processed, new.service_id, new.service_url, new.service_url_responce, new.request_ip, new.forced_smsc, new.cyrilic, new.wap_push, new.polytype_responce, new.priority, new.flash, new.polytype_id, new.retry, new.hlr, new.validity, new.token);
 """)
