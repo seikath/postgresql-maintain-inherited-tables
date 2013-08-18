@@ -22,7 +22,7 @@ os.environ['PGCONNECT_TIMEOUT'] = '5'
 mailtext=''
 def logit (what_to_log,db_used):
 	global mailtext
-	mailtext = mailtext + "\r\n" + what_to_log
+	mailtext = mailtext + "\r\n" + "["+str(datetime.datetime.now())+"] : ["+db_used+"] {0!s}".format(what_to_log)
 	print "["+str(datetime.datetime.now())+"] : ["+db_used+"] {0!s}".format(what_to_log)
 
 
@@ -37,6 +37,14 @@ try:
 	table_name_base = config.get('rule-conf','table_name_base')
 	vc_debug = config.getboolean('rule-conf','vc_debug')
 	vc_sql_debug = config.getboolean('rule-conf','vc_sql_debug')
+	# get mail config
+	mail_from_addr = config.get('mail-conf','mail_from_addr')
+	mail_smtp = config.get('mail-conf','mail_smtp')
+	mail_to_addr_list = config.get('mail-conf','mail_to_addr_list')
+	mail_cc_addr_list = config.get('mail-conf','mail_cc_addr_list')
+	mail_login = config.get('mail-conf','mail_login')
+	mail_passwd = config.get('mail-conf','mail_passwd')
+
 	if len(sys.argv) > 1 and sys.argv[1] == 'darkwater':
 		if vc_debug : logit("Loading db config : db-darkwater-vpn",sys.argv[1])
 		config_db = dict(config.items("db-darkwater-vpn"))
@@ -67,7 +75,7 @@ def sendemail(from_addr, to_addr_list, cc_addr_list,
     message = header + message
   
     server = smtplib.SMTP(smtpserver)
-    server.starttls()
+    ## server.starttls()
     server.login(login,password)
     problems = server.sendmail(from_addr, to_addr_list, message)
     server.quit()
@@ -178,7 +186,20 @@ for week in xrange(1,weeks_to_activate):
 		if vc_debug : logit("We might NOT have rule {1!s} serving {0!s} weeks. It will be created now,".format(week,rulename),sys.argv[1])
 		sql_create_missing_rule=create_rule_for_the_table_inherited % {'tablename':'bsms_in_p'+str(relative_year)+'w'+str(relative_week),'table_name_base':table_name_base,'rulename':rulename,'first_day_of_week':relative_first_day_of_week,'next_first_day_of_week':relative_next_first_day_of_week}
 		cur_db=sql_execute(cur_db,sql_create_missing_rule,vc_sql_debug)
+#send mail report
+sendemail(
+	from_addr    = mail_from_addr
+	,to_addr_list = [mail_to_addr_list]
+	,cc_addr_list = [mail_cc_addr_list]
+	,subject      = "Aegir inheritance maintenance report ["+str(datetime.datetime.now())+"]"
+	,message      =  mailtext
+	,login        = mail_login
+	,password     = mail_passwd
+	,smtpserver = mail_smtp
+	)
+if vc_debug : logit("Sent mail report to {0!s}".format(mail_from_addr),sys.argv[1])
 # closing db cursor, db links
+
 cur_db.close()
 conn_db.close()
 sys.exit (0)
