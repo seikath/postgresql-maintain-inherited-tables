@@ -141,7 +141,8 @@ for week in xrange(1,weeks_to_activate):
 	relative_week='{0:02d}'.format(date.isocalendar(datetime.datetime.today()+datetime.timedelta(weeks=week))[1])
 	relative_year=date.isocalendar(datetime.datetime.today()+datetime.timedelta(weeks=week))[0]
 	rulename='route_rule_bsms_in_p{0!s}w{1!s}'.format(relative_year,relative_week)
-	inherited_table = (datetime.datetime.today() + datetime.timedelta(weeks=week)).strftime("bsms_in_p%Yw%U")
+	#inherited_table = (datetime.datetime.today() + datetime.timedelta(weeks=week)).strftime("bsms_in_p%Yw%U")
+	inherited_table = 'bsms_in_p{0!s}w{1!s}'.format(relative_year,relative_week)
 	if vc_debug : logit("Checking inherited table {0!s} existance..".format(inherited_table),sys.argv[1])
 	sql_check_table_existance=cur_db.mogrify(query_table_exists,{'inherited_table' : inherited_table})
 	if vc_sql_debug : logit("SQL: {0!s}".format(sql_check_table_existance),sys.argv[1])
